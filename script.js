@@ -1,65 +1,38 @@
-document.addEventListener('DOMContentLoaded', function() {
-    const menuItems = document.querySelectorAll('.card');
-    const orderItemsDiv = document.getElementById('menuItems');
-    const totalPriceSpan = document.getElementById('totalPrice');
-    const orderForm = document.getElementById('orderForm');
+let cart = [];
 
-    // Create checkboxes for each menu item
-    menuItems.forEach(item => {
-        const name = item.querySelector('h3').textContent;
-        const price = item.querySelector('span').textContent;
-        
-        const div = document.createElement('div');
-        div.className = 'menu-item-select';
-        div.innerHTML = `
-            <label>
-                <input type="checkbox" name="items" value="${name}" data-price="${price.replace('R$ ', '')}">
-                ${name} - ${price}
-            </label>
-        `;
-        orderItemsDiv.appendChild(div);
-    });
+function addToCart(item, price) {
+  cart.push({ item, price });
+  updateCart();
+}
 
-    // Calculate total when items are selected
-    orderItemsDiv.addEventListener('change', calculateTotal);
+function updateCart() {
+  const cartList = document.getElementById('cart-items');
+  const totalSpan = document.getElementById('total');
+  cartList.innerHTML = '';
+  let total = 0;
 
-    function calculateTotal() {
-        const checkedItems = document.querySelectorAll('input[name="items"]:checked');
-        let total = 0;
-        
-        checkedItems.forEach(item => {
-            total += parseFloat(item.dataset.price);
-        });
+  cart.forEach(prod => {
+    const li = document.createElement('li');
+    li.textContent = `${prod.item} - R$ ${prod.price.toFixed(2)}`;
+    cartList.appendChild(li);
+    total += prod.price;
+  });
 
-        totalPriceSpan.textContent = total.toFixed(2);
-    }
+  totalSpan.textContent = total.toFixed(2);
+}
 
-    // Handle form submission
-    orderForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        
-        const name = document.getElementById('name').value;
-        const address = document.getElementById('address').value;
-        const phone = document.getElementById('phone').value;
-        const selectedItems = Array.from(document.querySelectorAll('input[name="items"]:checked'))
-            .map(item => item.value);
-        
-        if (selectedItems.length === 0) {
-            alert('Por favor, selecione pelo menos um item do menu.');
-            return;
-        }
+function finalizeOrder() {
+  if (cart.length === 0) {
+    alert('Seu carrinho está vazio!');
+    return;
+  }
 
-        const orderMessage = `
-            Pedido recebido!
-            Nome: ${name}
-            Endereço: ${address}
-            Telefone: ${phone}
-            Itens: ${selectedItems.join(', ')}
-            Total: R$ ${totalPriceSpan.textContent}
-        `;
+  const message = cart
+    .map(p => `🍔 ${p.item} - R$ ${p.price.toFixed(2)}`)
+    .join('%0A');
+  const total = cart.reduce((sum, p) => sum + p.price, 0).toFixed(2);
 
-        alert(orderMessage);
-        orderForm.reset();
-        totalPriceSpan.textContent = '0.00';
-    });
-});
+  const phone = ''; // <- coloque seu número aqui, ex: '5599999999999'
+  const url = `https://wa.me/${phone}?text=📦 Pedido:%0A${message}%0A%0ATotal: R$ ${total}`;
+  window.open(url, '_blank');
+}
